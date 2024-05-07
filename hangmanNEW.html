@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hangman Game - Unique Feedback</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-y: auto;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000; /* Keep background black */
+        }
+        #mainContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            min-height: 100vh;
+            box-sizing: border-box;
+            padding: 20px;
+        }
+        #hangmanPic pre {
+            font-family: 'Courier New', monospace;
+            font-size: 27px;
+            line-height: 1;
+            margin: 30px 0;
+            color: #FFF; /* Change text color to white */
+        }
+        #feedback, #result, #guesses, p, button, input, #textModal #textContent {
+            color: #FFF; /* Change all text and characters to white */
+        }
+        #textModal {
+            display: none;
+            flex-direction: column;
+            position: absolute;
+            top: 65%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 900px;
+            height: 550px;
+            background-color: black;
+            padding: 20px;
+            border: 1px solid black;
+        }
+        #continueButton, #continueTextButton {
+            display: none;
+            margin-top: 20px;
+            background-color: #FFF; /* Button background white */
+            border: none;
+            color: #000; /* Button text color black for contrast */
+        }
+		.skull {
+    	display: block;
+    	text-align: center;
+   		margin: 20px 0; /* Adds space above and below the symbol */
+}
+        input {
+            background-color: #000; /* Input background black */
+            border: 1px solid #FFF; /* White border for input */
+            color: #FFF; /* White text for input */
+        }
+        #guessButton {
+            color: #000; /* Change only the text color of the "Guess" button to black */
+        }
+    </style>
+</head>
+<body>
+    <div id="mainContainer">
+        <h1>A Game of Hangman</h1>
+        <div id="hangmanPic">
+            <pre id="hangmanDrawing">
+             _______
+             |     |
+             |     
+             |    
+             |    
+             |   
+          ___|___
+            </pre>
+        </div>
+        <p id="wordToGuess">_ _ _ _ _ _ _ _ _</p>
+        <input type="text" id="userInput" placeholder="Enter a letter" maxlength="1">
+        <button id="guessButton" onclick="guessLetter()">Guess</button>
+        <div id="feedback"></div>
+        <p id="guesses">Guesses left: 9</p>
+        <button id="continueButton" onclick="showTextPage()">Continue</button>
+        <p id="result"></p>
+    </div>
+    <div id="textModal">
+        <div id="textContent">Text content will be shown here based on the game's progress.</div>
+        <button id="continueTextButton" onclick="continueGame()">Continue</button>
+    </div>
+
+    <script>
+    let selectedWord = 'Automatic';
+    let displayWord = '_ '.repeat(selectedWord.length).trim();
+    let guessedLetters = [];	
+    let incorrectGuesses = 0;
+    let textPageIndex = 0;  // This will track the index of the textPages for incorrect guesses.
+    let lastGuessWasCorrect = false;  // This will keep track of whether the last guess was correct.
+
+        const textPages = [
+            "This isn't going to end how you think." + new Array(200).join("Try again!"),
+            "Many struggle to understand where it all went wrong. Was it that very first utterance of “LO” emitting from the halls of UCLA across the virgin dark internet that did us in? Was it the algorithms and Tik Tok drones shuffling in the streets for tips and digital blue roses? Or was it the language Transformers that decided to stack morphologies and syntax like smooth LEGOs until that tower of Babel leaned under its own godless, conforming weight? While many scholars attempt to take the moment of catalyst back to the very first bit or atomic fission, that calculus misses the point; moreover, it fails to accurately triangulate what exactly went wrong with us.<br><br><br><span class='skull'>☠</span><br><br><br>My mother tells me she’s been watching YouTube compilations of disasters. Half-dead, screaming, all the clips stitched together like some shuffling zombie Blue Planet. She likes the tsunami ones the best. “They come slow,” she says. Momentarily embarrassed, she laughs. There’s panic on the ground in the human’s movement. A frenzy of ants. “It’s crazy how the wave moves so… slowly.” She almost says, “Hypnotically,” but doesn’t. She likes to think she would not scurry, not in the face of something so slow. “It’s like miniature stuff. I don’t know. I like how it inches, kind of, yeah, inevitable.” Tsunami.<br><br><br><span class='skull'>☠</span><br><br><br>In 1892, in Cheyenne, Wyoming, James P. Julien, a local architect and “humanist,” invents what comes to be known as the “Julien Gallows.” The first automated gallows, wherein, the Hanged Man is responsible for hanging himself, thereby removing the Hangman from societal suspicion, the burden of sin, and payment.",
+            "The Julien Gallows saw its first usage in the execution of Tom Horn, a famous—or infamous?—gunslinger, lawman, and alleged murderer of a fourteen year old boy, Willie Nickell. This moment of time containing a whole host of “firsts” as the preceding trial of Horn became America’s first “Trial of the Century”: newspaper frenzies and intensifying American attention. So viral was the trial that even the celebrity outlaw, Butch Cassidy, was rumored to be headed to Cheyenne to deliver Horn from his automatic execution, causing Julien to construct his landmark Gallows inside the squat jailhouse to further ensure the mechanistic end was uninterrupted. The Sheriff agreed. Though he and his subordinate believed that a sheet should be installed between the cell, Horn, and the construction of the inevitable cogs. The thinking being that to see the internal clockwork of his encroaching death was somehow problematic and cruel, even to a hardened, child killing former detective like Horn.<br><br><br><span class='skull'>☠</span><br><br><br>>I spent the entire night talking to his girlfriend. She was beautiful and he knew it. I spoke to her all night and in ways he could never, and he knew it. I danced while he foolishly lounged like a champagne dragon. I charmed her. I made her laugh until her sapphire eyes blazed euphoric and wild. Then, come the stroke of midnight, she ran into her boyfriend’s arms where they kissed and pressed each other into one. Later, she told me how sad I looked under the disco confetti with no one to kiss. Happy New Year.<br><br><br><span class='skull'>☠</span><br><br><br>The white sheet, here, is an under-examined aspect in the chronography of the root fracture. It seems the sheet was first stripped from Horn’s bedding, hung on one of the four walls of his cell—blocking exactly one quarter of his view to the outside world—and obscuring two authorities, one architect, three contracted wage earners, and the exact specifics of the end. For this action, Horn failed to witness the inner workings of his eventual execution. However, it is said, when speaking to the local priest before his death, Horn reported understanding perfectly each cog of the mechanism, mainsprings and driver, without prior architectural training.",
+            "By the 1800s, gallows had become an expected part of every citizen’s day; they would walk by the cedar citadel every morning headed to school; town posters were nailed to its angles; and their weekend plans often hovered around the Hangman’s schedule. Even the word “gallow” sources from the French, potence, then further back from Latin, potentia, or, 'power.'<br><br><br><span class='skull'>☠</span><br><br><br>I love to pray. I don’t do it enough. But when I do, oh, man, do I love it. There’s something about being on your knees, submitting. Knowing whatever happens elsewhere, there, on my knees, someone else is in charge of my body. It’s freeing. Kneel.<br><br><br><span class='skull'>☠</span><br><br><br>Like any grand invention moving humanity forward on the tracks of progress, James P. Julien aimed to solve a practical problem: how can we rescue the responsible Hangman from the necessary sin of his required responsibility? For he was sinning. Wasn’t he? Even in the superior cause of civilization, the Good Book is clear on this, and, reportedly, Julien set out to save souls; if not their current souls, already stained with the honorific duty, then the thousands of souls to come next, no lever, switch, or pulley strong enough to mediate the transgression between God and man. How do we introduce the humane into the inherent realm of evil?<br><br><br><span class='skull'>☠</span><br><br><br>She’d been sick for three days. Something I’d never seen before; it was frightening. She was standing in the yard, heaving. A violent rhythm. Like when you’re so sick your body fights to vomit out the stomach, only her chest was covered in froth, new and virgin-white, not bile. And her mouth hung open, mucus from her nose joining the mixture. And the moaning was low, not painful, as if she was concentrating on something else. Her moans coming out unnoticed. It would be something regular if she weren’t so far along. 'Any day now,' my stepfather said. But when flesh is money, you don’t just bury it. 'Her calf might be okay,' he said. 'We’ll wait it out. See what happens.'",
+            "Inside the lone Wyoming penitentiary museum, there is a replica of the Julien Gallows. A miniature replica. Possibly built on a 3:1 scale, maybe, with the modern trappings of aluminum and glossy yellow painted handles. Bearing some resemblance to the original. Though, in Gallows lore, the first Julien Gallows saw only one life before it vanished. Vanished like deleted code, version 1.0 vanishing overnight in service to version 2.0, Alpha to Omega, resurrection served as a necessary security update. The miniature Gallows uses a miniature stuffed human to demonstrate the execution; upon call, the stuffed human does not have a name.<br><br><br><span class='skull'>☠</span><br><br><br>The headline reads: 'This Guy Used ChatGPT to Talk to 5,000 Women on Tinder and Met His Wife.' For the first few months, the article reports, the future wife happily, and unknowingly, engaged in courtship with ChatGPT; she spoke exclusively with the AI. Until, eventually, ChatGPT alerted him, and a transfer of conversation was, painstakingly, reproduced so he could pattern match and catch up on the woman’s love. 'At some point, the [ChatGPT] wrote me a recommendation that maybe it’s time to propose.' And it was. Happily ever After.<br><br><br><span class='skull'>☠</span><br><br><br>As the pressure plate is engaged by the unknown plush convict, water audibly trickles from some designs at the base of the Julien Gallows. The intermittent time we wait for the drop is… uncomfortable. Painful even. Eternity exists between the body’s weight as catalyst and the Gallows' conviction to its lone design. The ticking of a clock one cannot see. The winding of a jack in the box lever turning ever so slowly, the song 'Pop Goes the Weasel' droning in cycles, and we squint with each rotation, knowing that this one signals the end. No. The next. And that’s with a doll! This system feels somehow more sinister than if a family member were conducting the explosion of Jack from his box. As though, they were given the ultimate decision of when the song ends, and we as the victim would feel the slightest accuracy of anticipation, ultimately lowering the pain of the inevitable. It is only with the mechanization of Jack do we feel the truefreefall of the unknown, horrible and unmooring, lost to the uncanny, unidentifiable end.",
+            "In the 1980 William Wiard directed film, Tom Horn, starring Steve McQueen as the outlaw Horn, we get another version of the Gallows. The architect enters the jail house, dusty, grey, wooden, pulled from any western movie set you’ve ever seen. The architect, Julien, is accompanied by the sheriff, carrying scales, somehow reminiscent of the scales Justice herself might carry. They open the cell containing Horn. He steps out. He steps onto the scale. The architect weighs his matter. The outlaw steps off the scale and asks, 'Do I spring that trap myself?'<br><br>'Exactly,' the architect replies.<br><br>The outlaw laughs. 'Makes me feel like I’m committing suicide.'<br><br>This scene from the film is fiction. According to Tom Horn: In Life and Legend, by Larry D. Ball, the process failed to encroach upon the scientific. More, it became a type of strange magic. The authorities and the architect used sacks containing various objects to decide the counterweight to the weight of Horn’s life. 'Why the lawmen did not weigh Horn is unclear. While in confinement, Horn lost 50 pounds, and therefore weighed only 150-60 pounds.' There’s no doubt that, in the film, the scales are more metaphorical and aim to elevate a western trying to philosophize and immortalize Horn. However, there is no denying that a scene watching the sheriff—played by the singular Slim Pickens—conduct trial and error with sacks of various household goods in front of Horn would have carried just as much metaphorical weight.<br><br><br><span class='skull'>☠</span><br><br><br>'Whatever else a man does, he will not go wrong so long as he is sincerely striving to imitate Christ. Moreover, it is the actual imitation of Christ that is the most important thing since there are many who are highly learned about Christ but fail to follow him' [From: Chapter I: The imitations of Christ and Contempt for the Vanities of the world, The Imitation of Christ byThomas A. Kempis].",
+            "It’s reported that, on the day of his hanging, Horn had requested the Southern Baptist hymn, “Life’s Railway to Heaven,” written in cooperation with Baptist preacher M.E. Abbey and Charles Tillman, whom the latter, among other hustles, extensively sold Wizard’s Oil during the end of the 19th century:<br><br><br>Life is like a mountain railroad<br><br>With an engineer that’s brave;<br><br>We must make the run successful<br><br>From the cradle to the grave;<br><br>Watch the curves, the fills, the tunnels,<br><br>Never falter, never quall;<br><br>Keep your hand upon the throttle,<br><br>And your eye upon the rail.<br><br><br><span class='skull'>☠</span><br><br><br>My father was reborn on a cassette tape, August 23rd, 2022. And even though I can only rewind him and fast forward him, I wouldn’t trade him for a flesh and blood father. At least I understand how a man works. Side A / Side B.<br><br><br><span class='skull'>☠</span><br><br><br>Legend maintains that Horn chose “Life’s railroad to Heaven” strictly due to the runtime of the song. While the Johnny Cash hit cover in the 70s lasted five minutes and twenty-eight seconds, and the more traditional version by The Oak Ridge Boys lasted two minutes and forty-four seconds, Horn reportedly counted on his version to last one minute and forty-sevenseconds; the timed climax would be the signal for his prison break carried out by his loved ones. What Horn apparently did not anticipate was the enormous crowd that fit themselves into the cramped jailhouse, altogether singing the hymn, slow, dragging the procession out with soaring harmonies, drenched in a realization that, with the absence of the Hangman, there didn’t seem to be anywhere for the sin of the action to go, and, instead, it infused the audience, their guilt joining the Hanged Man, who bore the incredible weight of the convicted, the executioner, andthe victim, earning corrupted dimensions possibly unseen before.",
+            "My wife keeps telling me to quit worrying about our child’s eye color.<br><br>'It takes six to nine months before the color settles, and we can really tell,' she says.<br><br>It’s lingering between blue and green. Almost beautiful.<br><br>'I know,' I say.<br><br>'What? You don’t want them to look like mine?'<br><br>She’s upset.<br><br>'No. As long as they’re not blue.'<br><br><br><span class='skull'>☠</span><br><br><br>Executed Today is described as a blog dedicated to a “daily chronicle” of executions. One can sign up via email to receive a daily newsletter about who was executed on the morning you awaken, how they were executed, and the larger implications surrounding the person’s conviction, trial, and execution. September 20th? Pascual Ramos of Puerto Rico, 1927, who 'stalked his prey,' a man driving an oxcart, with a machete. The subsequent execution stands as Puerto Rico’s last. May 17th? A band of eight highwaymen were all executed for robbery in 1721. There is a beautiful poem to commemorate the moment. The blog goes on to defend its mailing list as 'neither pro- nor anti-death penalty in general nor in any particular. Its interest is the perspective on humanity we gain through the window of this human institution.' And the only comment on the blog’s page reads: 'Hi Headsman, I’ve been enjoying your blog for the last six months or so. I was on the daily email list but cancelled after I started to digest the full contents of a given date on my own. I like the new layout but very much miss the ability to get a little deeper as I had before.'<br><br><br><span class='skull'>☠</span><br><br><br>Our dog bit the neighbor kid in the face. Her father clasped her up into his arms while my stepfather apologized. 'It’s okay. Thing didn’t know any better,' he said as they headed for stitches. I remember looking at our dog and knowing what the man said was true. Animals are like that.",
+            "There are no settled accounts about what happened next. Fourteen minutes? Seventeen minutes? Sixteen minutes? One eyewitness report of the happenings, in the Republican newspaper, goes on to state:<br><br>The sound of running water ceased, the silence was distressing and many heads turned away, [then] finally, at the end of thirty-one seconds, which seemed like so many hours, there was a cracking sound as if a bolt had suddenly shot into a socket, and almost before the spectators were aware of it, the body dropped through the opening. [Horn’s] body turned slightly then hung still.<br><br>The time was 11:08 am. The Julien Gallows performed a calm, successful suicide.<br><br><br><span class='skull'>☠</span><br><br><br>It can be a thing where more and more responsibility can remove responsibility. To say, there’s only so much responsibility to go around. A war supplanting a dream, and no one would ever question a war effort. Kids.<br><br><br><span class='skull'>☠</span><br><br><br>'Unfortunately, the execution did not go as planned…Instead of a humane hanging, onlookers were horrified when the noose failed to snap Horn’s neck. His body dangled from the [G]allows for 17 minutes before he was finally pronounced dead. The Julian [sic] Gallows was later sent to the Wyoming Frontier Prison in Rawlins, where it remained in use until 1936.' No time of death provided.<br><br><br><span class='skull'>☠</span><br><br><br>'Are we going to keep living the same stories our parents lived?' Yes, dear Balloonist, but you grow to like that, as surely as you do grow.<br><br><br><span class='skull'>☠</span><br><br><br>'They said the first man to be executed by this device waited some 30 minutes before the trap dropped and he hung himself. Unfortunately, this do-it-yourself [G]allows didn’t drop the condemned man far enough to break his neck, and they died a slow death through strangulation. Nine men were hung in this fashion.'",
+			"How did I trade for a cul-de-sac? How did I think, family pictures, and Christmas plays? I've only found M30 Blues, cigarettes, and Tramadol pink set me a light. I shouldn't have ever traded those colors, not for that white sunshine brunch, not for that grey fallowed PTA, not for that red matching 401k, their compounding interest building, building, building, building to mytoppling 'golden years.' Not for none of it should I have traded the high of that gutter rainbow.<br><br><br><span class='skull'>☠</span><br><br><br>Horn’s death did not go easy regardless of which account one chooses to privilege, for, even though the county coroner confirmed the gunslinger’s death, sightings of the man continued. The Laramie Boomerang even reported that 'by some mysterious legerdemain thecounty authorities had substituted a dummy for the real man.'<br><br><br><span class='skull'>☠</span><br><br><br>There can be no greater responsibility than a person’s life or their suicide.<br><br><br><span class='skull'>☠</span><br><br><br>On November 19th, the day before Tom Horn killed himself, an anonymous letter arrived at the governor’s house, stating, 'I am the one who killed Willie Nickell. Tell them I do not want to see an innocent man hung. I will confess if they do not hang me.'<br><br><br><span class='skull'>☠</span><br><br><br>There’s comfort in progressions. Inside the scales, I understand my place. Grasping the right key, the future seems so clear. B-Flat.<br><br><br><span class='skull'>☠</span><br><br><br>Leather straps were fashioned around Horn’s ankles, per tradition, to keep the Hanged Man from kicking. Upon noticing the young undersheriff’s nerves as he worked the leather, Horn reportedly said, “Don’t be nervous boys, you’re only doing your duty.” When his legs were tied, the two sheriffs picked Tom Horn up and placed him on the pressure plate, beginning the mechanical suicide, and the end of Horn’s life.",
+			"Text for stage 11...",
+			"Text for stage 12...",
+			"Text for stage 13...",
+			"Text for stage 14...",
+			"Text for stage 15...",
+            "Final text when the game ends - either win or lose."
+        ];
+
+        const hangmanStages = [
+    `
+     _______
+     |     |
+     |     
+     |    
+     |    
+     |   
+  ___|___
+    `,
+    `
+     _______
+     |     |
+     |     O
+     |    
+     |    
+     |   
+  ___|___
+    `,
+    `
+     _______
+     |     |
+     |     O
+     |     |
+     |    
+     |   
+  ___|___
+    `,
+    `
+     _______
+     |     |
+     |     O
+     |    /|
+     |    
+     |   
+  ___|___
+    `,
+    `
+     _______
+     |     |
+     |     O
+     |    /|\\
+     |    
+     |   
+  ___|___
+    `,
+    `
+     _______
+     |     |
+     |     O
+     |    /|\\
+     |    / 
+     |   
+  ___|___
+    `,
+    `
+     _______
+     |     |
+     |     O
+     |    /|\\
+     |    / \\
+     |   
+  ___|___
+    `,
+    `
+     _______
+     |     |
+     |     O
+     |    /|\\
+     |    / \\
+     |   =
+  ___|___
+    `,
+    `
+     _______
+     |     |
+     |     O
+     |    /|\\
+     |    / \\
+     |   =   =
+  ___|___
+    `,
+    `
+     _______
+     |     |
+     |    :(
+     |    /|\\
+     |    / \\
+     |   =   =
+  ___|___
+    `
+];
+
+
+        const correctMessages = [
+            "Excellent job on choosing your first letter! That was really easy wasn't it.", "Wonderful choice! Now, I'm wondering what kind of hangman are you? It seems you don't want this convicted criminal to find just ends...", "Oh, wow, amazing! I suppose this is the way the rules are set up. He gets to go free if you keep this up. Must be a lot of responsibility, letting him go free when you don't even know what he did. Do you even want to know?", "Keep it up! You're doing great...I guess.", "Huh? That's interesting. He has been set free and now it is you who holds the sin of what you did. At least if you had hanged him like you were supposed to, then it would've just been your sin alone. One life. Now, no telling how many lives, how much sin, will be accrued because of what you've done.", 
+            "I'm not sure what you think you're doing?", "Do you think this is the easy way out?", "What will your neighbor's think of you?", "You will certainly be fired for this!", "Who knows, it might be you on the rope next time!"
+            // Add more unique messages for correct guesses up to 26
+        ];
+
+        const incorrectMessages = [
+            "Excellent job on choosing your first letter! Unfotunately, it was incorrect. Keep in mind that the function of a hangman is to, well, hang the man. So, whether you view this as a bad thing or a good thing is really up to you. And God. Please choose your next letter.", "Not quite right! Oh, are you enjoying this? Is this fun? Please, understand that you cannot admit to anyone that you are having fun. That you're are playing our little game. Nobody wants to know that. No matter how much they say they want to know. It actually ruins this whole thing for them if they find out you're enjoying this. Just, keep it to yourself. Okay? Okay! Onwards to our next letter!", "Keep trying! I think... Anyways, I wanted to thank you for not telling anyone your name. Identity is sorta triggering in this industry. It's another thing nobody wants to know. Of course, they want to know the Hanged Man. But only as a man, not what comes next. Hence the usual blindfold. Nobody wants to see him change into what we demand. Man to object. Man to symbol. It's too much, you know? Of course you do. What am I saying? Go ahead and choose your next letter!", "Wait, are you doing this on purpose? Are you really trying to murder this Hanged Man? Huh? You cannot do that! It's important the Hangman have no intentions here. You stand solely as representative of the People's will. Pure manifestation of us. All of us. Do not wish for this man's death. Honestly, do not wish at all. I don't mean to be, well, mean or anything like that. But it's important you know your position. Know your role. Adhere to the responsibility of The Hangman. Please pick your next letter.", "Okay, Christ, this is getting out of hand. Are you not a God fearing Hangman? (REMINDER: While you may be anonymous to us and your community, you're not anonymous to God. Answer wisely. Consider Him and the weight any Hangman carries, the dirty sin of it all!). It's important to remember that, even though you're only pulling a lever, swinging an axe, engaging a mechanism, the measure of premeditation and guilt are the same. It's as if you murdered this Hanged Man yourself, which, of course, you're certainly not doing much to save him currently. Remember, it's 'Thou shalt not kill.' Not: 'Thou shalt not kill unless a lot of people want you to do it, then it's cool' Your own morality, the DNA of your soul, is at stake here. You cannot take this lightly. Your own eternity is at the end of that rope as much as that man's neck.",
+            "This is a performance. So when you are around town, pretend like the citizens don't know you're the Hangman and they will pretend in kind. Additionally, when you're conducting yourself on the gallows, put on a show! Move slowly. Wisely. This is serious business! The crowd will act stern in kind, even though you're putting on the only entertainment they get around here. People gotta live, ya know.", "Can you keep a secret? Oh, good! Okay, I kinda get why you enjoy this game. The reason I want you to know that is because we’re not supposed to enjoy this and it makes people and God uncomfortable. But they get to like it! They sell tickets to our little game, for chrissakes! Why can’t we enjoy it, too? I mean, that’s why we signed up, right? Exactly, someone has got to do it. The trick is to act like we hate it, like the weight of the Hanged Man's body there is heavy on our lives. He’s not though. I actually feel lighter as he gets heavier on these gallows. I knew you would understand!", "I'm glad you're sticking with this. We all need you to do it. Can you imagine not doing your duty after what he did to that child? Now, that would be a burden. Talk about a guilty conscience. How much responsibility would you bear if you simply wrote 'Progress' up there? The Hanged Man goes free and now it’s on you. YOU! Do you want that kind of responsibility, not for one life, but for the lives of your whole community?", "Allegedly. Shit, I forgot to say, 'Allegedly.' He was convicted, of course, but you know how these things go with juries of one's peers. They struggle to do their duty; there's so much pressure! What if they get it wrong, and the Hanged Man walks and 'allegedly' does it again? We know this isn't easy. It's difficult to be you. But don't be so hard on yourself, you know, we are all just victims of the Gallows. Our society victimizes us all by what we are required to do to maintain our memberships. God understands. Agency may have existed in Christ’s time, but now? In the age of the Gallows? He knows that, and he forgives you for playing along. Playing your part. Fucking cog. Hahaha! That’s the one thing I like about you, you’re not afraid to just make a decision. You always pull the trigger when given the chance. I know you feel a little guilty (maybe? Nah.) about the whole thing. But they do need us to do it for them. They know it. You know it. We know it. That's why they made us gallows in the first place. When a rock wouldn't do, they made a spear. When a spear became too... personal, they chose the axe. On and on. And now they have you. Cold. Sturdy. Uncomplicated and uninvolved. You're like a button, really. A shiny, red button. One that makes that satisfying clicking sound when engaging, and you always engage. We appreciate you!", "It is done."
+            // Add more unique messages for incorrect guesses up to 26
+        ];
+
+        document.getElementById('wordToGuess').textContent = displayWord;
+
+         function guessLetter() {
+        let input = document.getElementById('userInput').value.toLowerCase();
+        document.getElementById('userInput').value = ''; // Clear input after each guess
+        if (input && !guessedLetters.includes(input)) {
+            guessedLetters.push(input);
+            if (selectedWord.toLowerCase().includes(input)) {
+                lastGuessWasCorrect = true;  // Set last guess status to correct
+                updateDisplayWord(input);
+                document.getElementById('feedback').innerHTML = correctMessages[guessedLetters.length - 1].replace(/\.\s/g, ".<br><br>");
+            } else {
+                lastGuessWasCorrect = false;  // Set last guess status to incorrect
+                incorrectGuesses++;
+                if (textPageIndex < textPages.length - 1) {
+                    textPageIndex++;  // Move to the next page on incorrect guesses
+                }
+                document.getElementById('feedback').innerHTML = incorrectMessages[incorrectGuesses - 1].replace(/\.\s/g, ".<br><br>");
+                updateHangmanDrawing();
+                document.getElementById('guesses').textContent = `Guesses left: ${9 - incorrectGuesses}`;
+            }
+            document.getElementById('guessButton').style.display = 'none';
+            document.getElementById('userInput').style.display = 'none';
+            document.getElementById('continueButton').style.display = 'block';
+        } else {
+            document.getElementById('feedback').innerHTML = "HAHAHAH There's no shirking this responsibility. You've already guessed that letter. Try a different one.";
+        }
+    }
+
+    		function showTextPage() {
+        document.getElementById('textModal').style.display = 'block';
+        if (lastGuessWasCorrect) {
+            // Always show the first TextPage on correct guesses
+            document.getElementById('textContent').innerHTML = textPages[0];
+        } else {
+            // Show the next page in the sequence on incorrect guesses
+            document.getElementById('textContent').innerHTML = textPages[textPageIndex];
+        }
+        document.getElementById('continueTextButton').style.display = 'block';
+        document.getElementById('feedback').innerHTML = ""; // Clear feedback when showing text page
+    }
+		
+	function checkCorrectGuess(letter) {
+    const randomNumber = Math.random();
+    const threshold = 0.5; // Adjust this value to make the game harder or easier
+
+    if (randomNumber > threshold) {
+        // Treat the correct guess as invalid
+        disqualifiedLetters.push(letter);
+        document.getElementById('feedback').innerHTML = `You guessed the letter '${letter}' correctly, but you were too slow. The letter doesn't count.`;
+    } else {
+        // Update the display word with the correct guess
+        updateDisplayWord(letter);
+        document.getElementById('feedback').innerHTML = correctMessages[guessedLetters.length - 1].replace(/\.\s/g, ".<br><br>");
+    }
+}
+
+        function continueGame() {
+            document.getElementById('textModal').style.display = 'none';
+            if (incorrectGuesses >= 9 || !displayWord.includes('_')) {
+                checkGameEnd();
+            } else {
+                document.getElementById('userInput').style.display = 'block';
+                document.getElementById('guessButton').style.display = 'block';
+                document.getElementById('continueButton').style.display = 'none';
+            }
+        }
+
+        function updateDisplayWord(letter) {
+            let updatedWord = '';
+            for (let i = 0; i < selectedWord.length; i++) {
+                updatedWord += (selectedWord[i] === letter) ? letter + ' ' : displayWord[i * 2] + ' ';
+            }
+            displayWord = updatedWord.trim();
+            document.getElementById('wordToGuess').textContent = displayWord;
+        }
+
+        function updateHangmanDrawing() {
+            document.getElementById('hangmanDrawing').textContent = hangmanStages[incorrectGuesses];
+        }
+
+        function checkGameEnd() {
+            if (!displayWord.includes('_')) {
+                document.getElementById('result').textContent = 'Congratulations, you let the Hanged Man go free. That is... concerning. You bear quite a bit of responsibility for what you have done. I hope you are ready to accept the burden of this decision. It will not be fun. But, then again, this is only a game.';
+                document.getElementById('userInput').style.display = 'none';
+                document.getElementById('guessButton').style.display = 'none';
+                document.getElementById('continueButton').style.display = 'none';
+            } else if (incorrectGuesses >= 9) {
+                document.getElementById('result').textContent = `Congratulations! We all won! Well, not you. Or maybe you did, who's to say? It is difficult to judge if what you did was right or wrong. Someone else will decide that--which we love, by the way. But you decided to do it. And that was certainly a... choice. The word was ${selectedWord}.`;
+                document.getElementById('userInput').style.display = 'none';
+                document.getElementById('guessButton').style.display = 'none';
+                document.getElementById('continueButton').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
